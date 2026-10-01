@@ -5,7 +5,8 @@
 **Projeto:** Projeto de extensão - Análise e Desenvolvimento de Sistemas  
 **Organização de referência:** Priner - atividades industriais atendidas para a Braskem  
 **Escopo inicial:** Disciplina de Acesso por Cordas  
-**Data de revisão:** 26 de setembro de 2026
+**Data de revisão:** 26 de setembro de 2026  
+**Modelo de dados congelado:** `MODELO_DE_DADOS.md` (fonte da verdade do banco; em conflito, vale o modelo).
 
 ---
 
@@ -144,12 +145,14 @@ Cada RDO poderá conter diversos itens executados. Todo item deverá possuir:
 3. As referências impressas na relação de efetivo utilizarão o número do item da tabela de serviços. O sistema deverá gerar essas referências automaticamente no PDF.
 4. O responsável líder será um profissional N3 e não fará parte da relação de efetivo N1/N2. Esse N3 deverá possuir conta de usuário com perfil Responsável para revisar o RDO.
 5. Os horários da PT deverão obedecer à sequência lógica: solicitação, emissão/liberação e encerramento.
-6. Na primeira emissão, o RDO recebe número definitivo. Exclusões de rascunhos e de linhas só ocorrem antes da emissão. Após emitido, o documento oficial é imutável; correções após devolução do N3 geram nova versão rastreável, sem alterar o número.
-7. Após a emissão, o RDO segue para o Responsável (N3), não diretamente para o Planejamento.
-8. O Responsável (N3) aprova e libera o RDO para o Planejamento, ou devolve ao emitente com observações. Somente RDOs liberados aparecem na caixa de entrada do Planejamento.
-9. RDO devolvido volta a ser editável pelo emitente original. Ao reemitir, nova revisão do N3 é exigida e um novo PDF é gerado.
-10. O planejamento será responsável pela atualização dos marcadores Lançado Avanço, Lançado DHT e Arquivado, apenas em RDOs liberados.
-11. Convite de Emitente vincula-se somente a funcionário N2 ativo. Convite de Responsável vincula-se somente a funcionário N3 ativo. Convite de Planejamento não exige vínculo com funcionário.
+6. Na primeira emissão, o RDO recebe número definitivo (`RDO-AAAA-NNNNNN`, ano de `emitido_em`). O tipo do RDO fica imutável. Exclusão do RDO inteiro só ocorre em rascunho. Após emitido, o PDF oficial daquela versão é imutável; correções após devolução do N3 atualizam as linhas no lugar, geram novo PDF (versão+1) e registram as mudanças no histórico, sem alterar o número.
+7. Após a emissão, o RDO segue para o Usuario vinculado ao responsável líder (N3) do cabeçalho, não diretamente para o Planejamento. Nenhum outro N3 revisa aquele RDO.
+8. O Responsável (N3) do cabeçalho aprova e libera o RDO para o Planejamento, ou devolve ao emitente com observações. Somente RDOs liberados aparecem na caixa de entrada do Planejamento.
+9. RDO devolvido volta a ser editável pelo emitente original (único dono). Ele pode alterar campos, incluir linhas e trocar o N3 do cabeçalho. Linhas já presentes na versão emitida não podem ser excluídas. O emitente N2 entra automático na equipe e não pode ser removido. Ao reemitir, nova revisão do N3 vigente é exigida e um novo PDF é gerado.
+10. O planejamento marca Lançado Avanço e Lançado DHT (desmarcáveis para correção) e Arquivado (definitivo, permitido com zero lançamentos), apenas em RDOs liberados ou já arquivados (marcadores).
+11. Convite de Emitente vincula-se somente a funcionário N2 ativo. Convite de Responsável vincula-se somente a funcionário N3 ativo. Convite de Planejamento não exige vínculo com funcionário. Reenvio atualiza o mesmo convite (novo token, +48h). Há no máximo um convite não aceito por e-mail.
+12. Há um único emitente dono por RDO (`emitido_por_usuario_id`). Sem co-emitente.
+13. Na emissão/reemissão: mínimo 1 serviço, 1 pessoa na equipe e 1 visto (qualquer tipo). Itens executados (CML) são opcionais. `identificacao_equipamento` do verso copia o TAG do serviço.
 
 ## 8. Fluxo operacional proposto
 
@@ -394,8 +397,8 @@ erDiagram
 |---|---|---|
 | `RASCUNHO` | RDO em preenchimento, ainda sem numeração definitiva. | Emitente responsável. |
 | `AGUARDANDO_RESPONSAVEL` | RDO emitido, numerado, com PDF gerado, aguardando revisão do N3. | Sistema, mediante ação do Responsável (N3). |
-| `DEVOLVIDO` | N3 devolveu o RDO ao emitente com observações. Voltável à edição. | Emitente responsável (edição e reemissão). |
-| `LIBERADO` | N3 aprovou; o RDO está na caixa de entrada do Planejamento. Documento imutável. | Planejamento (marcadores e arquivamento). |
+| `DEVOLVIDO` | N3 devolveu o RDO ao emitente com observações. Editável: campos, inclusão de linhas e troca do N3. Linhas já emitidas não são excluídas. | Emitente dono (edição e reemissão). |
+| `LIBERADO` | N3 do cabeçalho aprovou; o RDO está na caixa de entrada do Planejamento. Conteúdo imutável. | Planejamento (marcadores, inclusive desmarcar Avanço/DHT, e arquivamento definitivo). |
 | `ARQUIVADO` | Processo administrativo encerrado; o documento permanece disponível para consulta e download. | Planejamento. |
 
 Os eventos de Avanço e DHT não precisam criar estados isolados: eles são marcadores independentes registrados no módulo de planejamento. Dessa forma, um RDO poderá estar liberado ou arquivado, tendo Avanço, DHT, ambos ou nenhum lançamento marcado.

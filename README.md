@@ -25,8 +25,10 @@ Admin cadastra + convida → Emitente ativa conta → preenche RDO → rascunho 
 
 ## Estrutura
 
-- `client/`: interface React com Vite.
-- `server/`: API Express e banco SQLite local.
-- `server/data/rdo.db`: banco criado automaticamente ao iniciar a API. Não deve ser versionado nem usado como armazenamento de produção.
+- `schema/001_init.sql`: schema PostgreSQL (fonte: `MODELO_DE_DADOS.md`).
+- `schema/002_seed_admin.sql`: seed do primeiro Administrador.
+- `client/`: interface React com Vite. Regras de UX em `src/domain/rdoRegras.ts`.
+- `server/`: API Express. As 4 regras recusam a requisicao com 4xx em `src/rdoValidacoes.js` + `src/rdoRoutes.js`.
 
-A especificação completa está em `ANALISE_DE_REQUISITOS.md`.
+A especificação funcional está em `ANALISE_DE_REQUISITOS.md`.  
+O modelo de dados congelado está em `MODELO_DE_DADOS.md`.
